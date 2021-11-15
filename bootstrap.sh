@@ -19,7 +19,8 @@ echo "Please add the following public key to github:"
 cat ~/.ssh/gitkey.pub
 read -n 1 -p "any key to continue" tmp
 
+# bootstrap the repo
 mkdir -p ~/dev/git
-git clone git@github.com:aperullo/dotfiles.git
+git clone git@github.com:aperullo/dotfiles.git ~/dev/git/dotfiles
 
-cp $HOME/dev/git/dotfiles/home/.gitconfig $HOME/.gitconfig
+# cp $HOME/dev/git/dotfiles/home/.gitconfig $HOME/.gitconfig
