@@ -1,5 +1,6 @@
 # If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:/usr/local/bin:$PATH
+export PATH=$HOME/bin:/usr/local/bin:$PATH
+export PATH=$HOME/.local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
 export ZSH="/home/ant/.oh-my-zsh"
@@ -61,6 +62,7 @@ ENABLE_CORRECTION="true"
 # or set a custom format using the strftime function format specifications,
 # see 'man strftime' for details.
 # HIST_STAMPS="mm/dd/yyyy"
+setopt HIST_IGNORE_SPACE
 
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
@@ -70,10 +72,17 @@ ENABLE_CORRECTION="true"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git thefuck zsh-autosuggestions)
+# plugins=(dnf)
+plugins=(git kubectl thefuck zsh-autosuggestions helm)
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
+
+# helper functions
+function is_installed {
+    which $1 > /dev/null 2>&1
+    return $?
+}
 
 # export MANPATH="/usr/local/man:$MANPATH"
 export PATH="/home/ant/.local/bin:$PATH"
@@ -91,6 +100,39 @@ export PATH="/home/ant/bin:$PATH"
 
 alias zshrc="source ~/.zshrc"
 
+# docker aliases
+if is_installed podman; then
+    alias docker="podman"
+fi
+
+if is_installed docker; then
+    alias dex="docker exec -it"
+    alias drun="docker run -it --entrypoint=/bin/sh"
+    alias dk="docker"
+    compdef dk=docker
+    alias dki="docker images"
+fi
+
+# kubectl completion
+if is_installed kubectl; then
+    source <(kubectl completion zsh)
+    alias kcl=kubectl
+    complete -F __start_kubectl kcl
+    compdef kcl=kubectl
+    # for multiple kubeconfig files to be used
+    export KUBECONFIG=$(find ~/.kube -type f -name "kube_config*" | sed -z "s/\n/:/g")
+fi
+
+# helm aliases
+if is_installed helm; then
+    source <(helm completion zsh)
+fi
+
+# zshrc-autosuggestions
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+ZSH_AUTOSUGGEST_COMPLETION_IGNORE="?"
+ZSH_AUTOSUGGEST_HISTORY_IGNORE="?"
+
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
 
@@ -104,18 +146,26 @@ alias zshrc="source ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 # dnf aliases
-alias dnfl="pacman -Si"                       # List packages
-alias dnfli="pacman -Qi"            # List installed packages
-alias dnfp="pacman -Si"                       # Show package information
-alias dnfs="pacman -Ss"                     # Search package
+if is_installed pacman; then
+    alias dnfl="pacman -Si"             # List packages
+    alias dnfli="pacman -Qi"            # List installed packages
+    alias dnfp="pacman -Si"             # Show package information
+    alias dnfs="pacman -Ss"             # Search package
 
-alias dnfu="sudo pacman -Syu"               # Upgrade package
-alias dnfi="sudo pacman -S"               # Install package
-alias dnfr="sudo pacman -Rs"                # Remove package
-alias dnfc="sudo pacman -Sc"             # Clean cache
+    alias dnfu="sudo pacman -Syu"       # Upgrade package
+    alias dnfi="sudo pacman -S"         # Install package
+    alias dnfr="sudo pacman -Rs"        # Remove package
+    alias dnfc="sudo pacman -Sc"        # Clean cache
+fi
 
 # vscode
 # flatpak vscode doesn't create code command by default
 alias code="flatpak run com.visualstudio.code"
+
+# homebrew
+if is_installed brew; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    export PATH=$HOME/linuxbrew/.linuxbrew/homebrew/bin:$PATH
+fi
 
 eval $(thefuck --alias)

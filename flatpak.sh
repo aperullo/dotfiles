@@ -4,9 +4,10 @@
 set -e
 
 # install commonly used apps in a way that works on any distro. 
-sudo pacman -S flatpak
+sudo pacman --noconfirm -S flatpak
 
 flatpak install flathub com.visualstudio.code
+alias code="flatpak run com.visualstudio.code"
 
 code --install-extension njpwerner.autodocstring
 code --install-extension GitHub.copilot
