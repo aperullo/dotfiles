@@ -114,4 +114,8 @@ alias dnfi="sudo pacman -S"               # Install package
 alias dnfr="sudo pacman -Rs"                # Remove package
 alias dnfc="sudo pacman -Sc"             # Clean cache
 
+# vscode
+# flatpak vscode doesn't create code command by default
+alias code="flatpak run com.visualstudio.code"
+
 eval $(thefuck --alias)
