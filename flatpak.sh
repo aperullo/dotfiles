@@ -4,7 +4,7 @@
 set -e
 
 # install commonly used apps in a way that works on any distro. 
-pacman -S flatpak
+sudo pacman -S flatpak
 flatpak install flathub com.visualstudio.code
 flatpak install flathub org.gimp.GIMP
 flatpak install flathub com.discordapp.Discord
