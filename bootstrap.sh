@@ -24,4 +24,4 @@ mkdir -p ~/dev/git
 git clone git@github.com:aperullo/dotfiles.git ~/dev/git/dotfiles
 
 cd ~/dev/git/dotfiles
-./install.sh
+./installer.sh
