@@ -73,7 +73,7 @@ setopt HIST_IGNORE_SPACE
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 # plugins=(dnf)
-plugins=(git kubectl thefuck zsh-autosuggestions helm)
+plugins=(git kubectl thefuck zsh-autosuggestions helm dnf)
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
@@ -85,9 +85,6 @@ function is_installed {
 }
 
 # export MANPATH="/usr/local/man:$MANPATH"
-export PATH="/home/ant/.local/bin:$PATH"
-export PATH="/home/ant/bin:$PATH"
-
 # You may need to manually set your language environment
 # export LANG=en_US.UTF-8
 
@@ -97,41 +94,6 @@ export PATH="/home/ant/bin:$PATH"
 # else
 #   export EDITOR='mvim'
 # fi
-
-alias zshrc="source ~/.zshrc"
-
-# docker aliases
-if is_installed podman; then
-    alias docker="podman"
-fi
-
-if is_installed docker; then
-    alias dex="docker exec -it"
-    alias drun="docker run -it --entrypoint=/bin/sh"
-    alias dk="docker"
-    compdef dk=docker
-    alias dki="docker images"
-fi
-
-# kubectl completion
-if is_installed kubectl; then
-    source <(kubectl completion zsh)
-    alias kcl=kubectl
-    complete -F __start_kubectl kcl
-    compdef kcl=kubectl
-    # for multiple kubeconfig files to be used
-    export KUBECONFIG=$(find ~/.kube -type f -name "kube_config*" | sed -z "s/\n/:/g")
-fi
-
-# helm aliases
-if is_installed helm; then
-    source <(helm completion zsh)
-fi
-
-# zshrc-autosuggestions
-ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-ZSH_AUTOSUGGEST_COMPLETION_IGNORE="?"
-ZSH_AUTOSUGGEST_HISTORY_IGNORE="?"
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -156,16 +118,6 @@ if is_installed pacman; then
     alias dnfi="sudo pacman -S"         # Install package
     alias dnfr="sudo pacman -Rs"        # Remove package
     alias dnfc="sudo pacman -Sc"        # Clean cache
-fi
-
-# vscode
-# flatpak vscode doesn't create code command by default
-alias code="flatpak run com.visualstudio.code"
-
-# homebrew
-if is_installed brew; then
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-    export PATH=$HOME/linuxbrew/.linuxbrew/homebrew/bin:$PATH
 fi
 
 eval $(thefuck --alias)

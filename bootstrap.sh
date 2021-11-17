@@ -23,7 +23,5 @@ read -n 1 -p "any key to continue" tmp
 mkdir -p ~/dev/git
 git clone git@github.com:aperullo/dotfiles.git ~/dev/git/dotfiles
 
-# cp $HOME/dev/git/dotfiles/home/.gitconfig $HOME/.gitconfig
-
 cd ~/dev/git/dotfiles
 ./install.sh
