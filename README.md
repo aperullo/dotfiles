@@ -28,3 +28,14 @@ Each subfolder is responsible for installing that program and any related aliase
 Some `install.sh` files will also symlink files into $HOME.
 
 It also should work across different distros by checking which package manager is installed.
+
+# KDE Plasma configuration
+
+KDE configuration was saved using [Konsave](https://github.com/Prayag2/konsave)
+
+To use, download Konsave and save it (can use a venv). 
+
+```
+> konsave --import kde/endeavor.knsv
+> konsole --apply endeavor
+```
