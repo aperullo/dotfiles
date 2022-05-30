@@ -37,4 +37,4 @@ sudo dnf config-manager --add-repo https://download.opensuse.org/repositories/ho
 
 sudo dnf install -y yadm
 
-yadm clone "https://github.com/aperullo/dotfiles.git" -f
+yadm clone "git@github.com:aperullo/dotfiles.git" -f
