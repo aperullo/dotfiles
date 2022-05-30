@@ -61,3 +61,15 @@ code --install-extension GitHub.copilot
 code --install-extension ms-python.python
 code --install-extension ms-python.vscode-pylance
 code --install-extension VisualStudioExptTeam.vscodeintellicode
+
+# post install steps
+chsh -s $(which zsh)
+
+# python build dependencies
+sudo dnf install dnf-plugins-core
+sudo dnf builddep python3
+sudo dnf install openssl1.1-1:1.1.1n-1.fc36.x86_64
+
+brew install pyenv
+pyenv install -v 3.10.3
+pyenv global 3.10.3
