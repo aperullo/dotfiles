@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if ! is_installed "kubectl"; then
+    brew install kubectl
+fi
+
+if ! is_installed "helm"; then
+    brew install helm
+fi

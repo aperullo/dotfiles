@@ -4,6 +4,7 @@
 if ! is_installed "zsh"; then
     echo "installing zsh"
     sudo dnf install -y zsh
+    chsh -s $(which zsh)
 fi
 
 if ! dir_exists $HOME/.oh-my-zsh; then
