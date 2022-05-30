@@ -1,0 +1,17 @@
+#!/bin/bash
+
+dir_exists () {
+  return $(test -d "$1")
+}
+export -f dir_exists
+
+file_exists () {
+  return $(test -f "$1")
+}
+export -f file_exists
+
+is_installed () {
+    command -v "$1" >/dev/null 2>&1
+    return $?
+}
+export -f is_installed

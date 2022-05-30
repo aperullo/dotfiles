@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# zsh
+if ! is_installed "zsh"; then
+    echo "installing zsh"
+    sudo dnf install -y zsh
+fi
+
+if ! dir_exists $HOME/.oh-my-zsh; then
+    echo "installing oh my zsh"
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+fi
+
+DIR=$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+if ! dir_exists "$DIR" ; then
+    echo "installing zsh-autosuggestion"
+    git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+fi
