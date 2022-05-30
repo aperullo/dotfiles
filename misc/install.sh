@@ -1,3 +1,0 @@
-source $FUNCTIONS_LIB
-
-install_package the_silver_searcher
