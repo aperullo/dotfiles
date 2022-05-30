@@ -132,3 +132,6 @@ ZSH_AUTOSUGGEST_COMPLETION_IGNORE="?"
 ZSH_AUTOSUGGEST_HISTORY_IGNORE="?"
 
 eval "$(pyenv init -)"
+
+# eval $(ssh-agent -s)
+# ssh-add ~/.ssh/gitkey
