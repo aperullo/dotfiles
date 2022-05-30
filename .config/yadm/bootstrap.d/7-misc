@@ -1,0 +1,6 @@
+#!/bin/sh
+set -e -o pipefail
+
+if ! is_installed "ag"; then
+    sudo dnf install the_silver_searcher
+fi

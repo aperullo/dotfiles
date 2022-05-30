@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# docker
+if ! is_installed "docker"; then
+    echo "installing docker"
+    sudo dnf -y install dnf-plugins-core
+
+    sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+
+    sudo dnf install -y docker-ce docker-ce-cli containerd.io
+
+    sudo systemctl start docker
+    sudo usermod -aG docker $USER
+    newgrp docker
+    sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
+    sudo chmod g+rwx "$HOME/.docker" -R
+    sudo systemctl enable docker.service
+    sudo systemctl enable containerd.service
+fi
+
+# docker compose
+if ! is_installed "docker-compose"; then
+    echo "installing docker compose"
+    sudo dnf install docker-compose-plugin
+
+    sudo curl -fL https://github.com/docker/compose-switch/releases/latest/download/docker-compose-linux-amd64 -o /usr/local/bin/compose-switch
+    sudo chmod +x /usr/local/bin/compose-switch
+    sudo update-alternatives --install /usr/local/bin/docker-compose docker-compose /usr/local/bin/compose-switch 99
+fi

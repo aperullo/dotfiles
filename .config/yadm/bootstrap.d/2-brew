@@ -1,7 +1,5 @@
 #!/bin/bash
 
-source funcs
-
 if ! is_installed "brew"; then
     echo "installing brew"
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"

@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e -o pipefail
+
+# python build dependencies
+if ! is_installed "pyenv"; then
+    sudo dnf install dnf-plugins-core
+    sudo dnf builddep python3
+    sudo dnf install openssl1.1-1:1.1.1n-1.fc36.x86_64
+
+    brew install pyenv
+    pyenv install -v 3.10.3
+    pyenv global 3.10.3
+fi
