@@ -9,13 +9,6 @@ file_exists () {
   return $(test -f "$1")
 }
 
-# ZSH
-sudo dnf install zsh
-
-if ! dir_exists $HOME/.oh-my-zsh; then
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-fi
-
 DIR=$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions
 if ! dir_exists "$DIR" ; then
     git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions

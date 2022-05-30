@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Stop on error
+set -e
+
+dir_exists () {
+  return $(test -d "$1")
+}
+
+if ! command -v docker &> /dev/null; then
+  sudo dnf install git-all
+fi
+
+# Once git is installed
+mkdir -p ~/.ssh
+
+FILE=$HOME/.ssh/gitkey
+if [ ! -f "$FILE" ]; then
+    ssh-keygen -t ed25519 -C "git" -f ~/.ssh/gitkey
+fi
+
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/gitkey
+
+echo "Please add the following public key to github:"
+cat ~/.ssh/gitkey.pub
+read -n 1 -p "any key to continue" tmp
+
+# zsh
+sudo dnf install -y zsh
+if ! dir_exists $HOME/.oh-my-zsh; then
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+fi
+
+# yadm
+sudo dnf config-manager --add-repo https://download.opensuse.org/repositories/home:TheLocehiliosan:yadm/Fedora_35/home:TheLocehiliosan:yadm.repo
+
+sudo dnf install -y yadm
+
+yadm clone "https://github.com/aperullo/dotfiles.git" -f
