@@ -110,7 +110,7 @@ if command -v kubectl &> /dev/null; then
     complete -F __start_kubectl kcl
     compdef kcl=kubectl
     # for multiple kubeconfig files to be used
-    export KUBECONFIG=$(find ~/.kube -type f -name "kube_config*" | sed -z "s/\n/:/g")
+    export KUBECONFIG=$(find ~/.kube -type f -name "*.yml" | sed -z "s/\n/:/g")
 fi
 
 # helm aliases
@@ -123,7 +123,11 @@ if command -v docker &> /dev/null; then
     alias drun="docker run -it --entrypoint=/bin/sh"
     alias dk="docker"
     compdef dk=docker
+    alias dkc="docker-compose"
+    compdef dkc=docker-compose
     alias dki="docker images"
+    alias dcu="docker-compose up"
+    alias dcd="docker-compose down"
 fi
 
 # zshrc-autosuggestions
@@ -135,3 +139,5 @@ eval "$(pyenv init -)"
 
 # eval $(ssh-agent -s)
 # ssh-add ~/.ssh/gitkey
+
+export PATH="/home/ant/.local/bin:$PATH"
