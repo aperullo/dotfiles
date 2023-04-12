@@ -82,4 +82,4 @@ else
     exit 1
 fi
 
-# yadm clone "git@github.com:aperullo/dotfiles.git" -f
+yadm clone "git@github.com:aperullo/dotfiles.git" -f
