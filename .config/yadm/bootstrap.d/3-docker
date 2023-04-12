@@ -3,25 +3,62 @@
 # docker
 if ! is_installed "docker"; then
     echo "installing docker"
-    sudo dnf -y install dnf-plugins-core
+    if [ -f "/etc/redhat-release" ]; then
+        # CentOS, Red Hat or Fedora
+        sudo dnf -y install dnf-plugins-core
 
-    sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+        sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
 
-    sudo dnf install -y docker-ce docker-ce-cli containerd.io
+        sudo dnf install -y docker-ce docker-ce-cli containerd.io
 
-    sudo systemctl start docker
-    sudo usermod -aG docker $USER
-    newgrp docker
-    sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
-    sudo chmod g+rwx "$HOME/.docker" -R
-    sudo systemctl enable docker.service
-    sudo systemctl enable containerd.service
+        sudo systemctl start docker
+        sudo usermod -aG docker $USER
+        newgrp docker
+        sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
+        sudo chmod g+rwx "$HOME/.docker" -R
+        sudo systemctl enable docker.service
+        sudo systemctl enable containerd.service
+
+    elif [ -f "/etc/debian_version" ]; then
+        # Debian or Ubuntu
+        sudo apt-get install -y ca-certificates curl gnupg
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+        # add repository
+        echo \
+        "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+        "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+        # install docker
+        sudo apt-get update
+        sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+        # add user to docker group
+        # sudo systemctl start docker
+        sudo usermod -aG docker $USER
+        newgrp docker
+        sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
+        sudo chmod g+rwx "$HOME/.docker" -R
+
+    elif [ -f "/etc/arch-release" ]; then
+        # Arch Linux
+        sudo pacman -S --noconfirm $1
+    else
+        # Unsupported Linux OS
+        echo "Unsupported Linux OS"
+        exit 1
+    fi
+    
+    
 fi
 
 # docker compose
 if ! is_installed "docker-compose"; then
     echo "installing docker compose"
-    sudo dnf install docker-compose-plugin
+    install-package docker-compose-plugin
 
     sudo curl -fL https://github.com/docker/compose-switch/releases/latest/download/docker-compose-linux-amd64 -o /usr/local/bin/compose-switch
     sudo chmod +x /usr/local/bin/compose-switch

@@ -1,6 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 set -e -o pipefail
 
 if ! is_installed "ag"; then
-    sudo dnf install -y the_silver_searcher
+    if [ -f "/etc/redhat-release" ]; then
+        install_package the_silver_searcher
+    elif [ -f "/etc/debian_version" ]; then
+        install_package silversearcher-ag
+    fi
 fi

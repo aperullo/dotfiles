@@ -1,13 +1,20 @@
-#!/bin/sh
+#!/bin/bash
 set -e -o pipefail
 
 # python build dependencies
-if ! is_installed "pyenv"; then
-    sudo dnf install -y dnf-plugins-core
-    sudo dnf builddep -y python3
-    sudo dnf install -y openssl1.1-1:1.1.1n-1.fc36.x86_64
+if ! is_installed "pyenv" || [ "$(pyenv global)" == "system" ]; then
+    
+    if [ -f "/etc/redhat-release" ]; then
+        install_package dnf-plugins-core
+        install_package openssl1.1-1:1.1.1n-1.fc36.x86_64
+    elif [ -f "/etc/debian_version" ]; then
+        sudo apt-get install -y lzma-dev make build-essential libssl-dev zlib1g-dev libreadline-dev libbz2-dev libsqlite3-dev wget curl llvm libncurses5-dev
+    fi
+
+    builddep python3
 
     brew install pyenv
     pyenv install -v 3.10.3
     pyenv global 3.10.3
+    eval "$(pyenv init -)"
 fi
