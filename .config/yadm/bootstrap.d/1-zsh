@@ -3,7 +3,7 @@
 # zsh
 if ! is_installed "zsh"; then
     echo "installing zsh"
-    sudo dnf install -y zsh
+    install_package zsh
     chsh -s $(which zsh)
 fi
 

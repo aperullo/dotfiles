@@ -15,3 +15,51 @@ is_installed () {
     return $?
 }
 export -f is_installed
+
+builddep() {
+    if [ -f "/etc/redhat-release" ]; then
+        # CentOS, Red Hat or Fedora
+        sudo dnf builddep -y $1
+    elif [ -f "/etc/debian_version" ]; then
+        # Debian or Ubuntu
+        if ! file_exists /etc/apt/sources.list.d/debian-src.list; then
+            echo "deb-src http://deb.debian.org/debian bullseye main" | sudo tee /etc/apt/sources.list.d/debian-src.list
+        fi
+        sudo apt-get build-dep -y $1
+    fi
+}
+export -f builddep
+
+install_package() {
+    # Detect OS
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        echo was linux
+        # Linux OS
+        if [ -f "/etc/redhat-release" ]; then
+            # CentOS, Red Hat or Fedora
+            sudo dnf install -y $1
+        elif [ -f "/etc/debian_version" ]; then
+            echo was debian
+            # Debian or Ubuntu
+            sudo apt-get install -y $1
+        elif [ -f "/etc/arch-release" ]; then
+            # Arch Linux
+            sudo pacman -S --noconfirm $1
+        else
+            # Unsupported Linux OS
+            echo "Unsupported Linux OS"
+            exit 1
+        fi
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        # brew install $1
+        # TODO: make work with mac os.
+        echo "mac not suppported yet"
+        exit 1
+    else
+        # Unsupported OS
+        echo "Unsupported OS"
+        exit 1
+    fi
+}
+export -f install_package

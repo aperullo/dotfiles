@@ -3,12 +3,43 @@
 # Stop on error
 set -e
 
+function install_package() {
+    # Detect OS
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # Linux OS
+        if [ -f "/etc/redhat-release" ]; then
+            # CentOS, Red Hat or Fedora
+            sudo dnf install -y $1
+        elif [ -f "/etc/debian_version" ]; then
+            # Debian or Ubuntu
+            sudo apt-get install -y $1
+        elif [ -f "/etc/arch-release" ]; then
+            # Arch Linux
+            sudo pacman -S --noconfirm $1
+        else
+            # Unsupported Linux OS
+            echo "Unsupported Linux OS"
+            exit 1
+        fi
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        # brew install $1
+        # TODO: make work with mac os.
+        echo "mac not suppported yet"
+        exit 1
+    else
+        # Unsupported OS
+        echo "Unsupported OS"
+        exit 1
+    fi
+}
+
 dir_exists () {
   return $(test -d "$1")
 }
 
-if ! command -v docker &> /dev/null; then
-  sudo dnf install git-all
+if ! command -v git &> /dev/null; then
+    install_package git-all
 fi
 
 # Once git is installed
@@ -27,14 +58,28 @@ cat ~/.ssh/gitkey.pub
 read -n 1 -p "any key to continue" tmp
 
 # zsh
-sudo dnf install -y zsh
+install_package -y zsh
 if ! dir_exists $HOME/.oh-my-zsh; then
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 fi
 
 # yadm
-sudo dnf config-manager --add-repo https://download.opensuse.org/repositories/home:TheLocehiliosan:yadm/Fedora_35/home:TheLocehiliosan:yadm.repo
 
-sudo dnf install -y yadm
+# Detect Linux OS
+if [ -f "/etc/redhat-release" ]; then
+    # CentOS, Red Hat or Fedora
+    sudo dnf config-manager --add-repo https://download.opensuse.org/repositories/home:TheLocehiliosan:yadm/Fedora_35/home:TheLocehiliosan:yadm.repo
+    sudo dnf install -y yadm
+elif [ -f "/etc/debian_version" ]; then
+    # Debian or Ubuntu
+    sudo apt-get install -y yadm
+elif [ -f "/etc/arch-release" ]; then
+    # Arch Linux
+    sudo pacman -S --noconfirm yadm
+else
+    # Unsupported OS
+    echo "Unsupported Linux OS"
+    exit 1
+fi
 
-yadm clone "git@github.com:aperullo/dotfiles.git" -f
+# yadm clone "git@github.com:aperullo/dotfiles.git" -f
