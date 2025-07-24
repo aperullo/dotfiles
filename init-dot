@@ -1,85 +1,292 @@
 #!/bin/bash
 
-# Stop on error
-set -e
+# Improved dotfiles installer with better cross-platform support and error handling
+set -euo pipefail  # Exit on error, undefined vars, and pipe failures
 
-function install_package() {
-    # Detect OS
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Logging functions
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1" >&2
+}
+
+# Error handler
+error_exit() {
+    log_error "$1"
+    exit 1
+}
+
+# Detect OS and package manager
+detect_os() {
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        # Linux OS
-        if [ -f "/etc/redhat-release" ]; then
-            # CentOS, Red Hat or Fedora
-            sudo dnf install -y $1
-        elif [ -f "/etc/debian_version" ]; then
-            # Debian or Ubuntu
-            sudo apt-get install -y $1
-        elif [ -f "/etc/arch-release" ]; then
-            # Arch Linux
-            sudo pacman -S --noconfirm $1
+        if command -v dnf &> /dev/null; then
+            echo "fedora"
+        elif command -v yum &> /dev/null; then
+            echo "rhel"
+        elif command -v apt-get &> /dev/null; then
+            echo "debian"
+        elif command -v pacman &> /dev/null; then
+            echo "arch"
         else
-            # Unsupported Linux OS
-            echo "Unsupported Linux OS"
-            exit 1
+            error_exit "Unsupported Linux distribution"
         fi
     elif [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS
-        # brew install $1
-        # TODO: make work with mac os.
-        echo "mac not suppported yet"
-        exit 1
+        echo "macos"
+    elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+        echo "windows"
     else
-        # Unsupported OS
-        echo "Unsupported OS"
-        exit 1
+        error_exit "Unsupported operating system: $OSTYPE"
     fi
 }
 
-dir_exists () {
-  return $(test -d "$1")
+# Install package based on OS
+install_package() {
+    local package="$1"
+    local os_type
+    os_type=$(detect_os)
+    
+    log_info "Installing $package on $os_type..."
+    
+    case "$os_type" in
+        "fedora")
+            sudo dnf install -y "$package" || error_exit "Failed to install $package with dnf"
+            ;;
+        "rhel")
+            sudo yum install -y "$package" || error_exit "Failed to install $package with yum"
+            ;;
+        "debian")
+            sudo apt-get update -qq || log_warn "Failed to update package list"
+            sudo apt-get install -y "$package" || error_exit "Failed to install $package with apt-get"
+            ;;
+        "arch")
+            sudo pacman -S --noconfirm "$package" || error_exit "Failed to install $package with pacman"
+            ;;
+        "macos")
+            if ! command -v brew &> /dev/null; then
+                log_info "Installing Homebrew..."
+                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || error_exit "Failed to install Homebrew"
+            fi
+            brew install "$package" || error_exit "Failed to install $package with brew"
+            ;;
+        "windows")
+            log_warn "Windows support is limited. Please install $package manually or use WSL"
+            return 1
+            ;;
+        *)
+            error_exit "Cannot install $package on unsupported OS: $os_type"
+            ;;
+    esac
+    
+    log_success "Successfully installed $package"
 }
 
-if ! command -v git &> /dev/null; then
-    install_package git-all
-fi
+# Check if directory exists
+dir_exists() {
+    [[ -d "$1" ]]
+}
 
-# Once git is installed
-mkdir -p ~/.ssh
+# Install git if not present
+ensure_git() {
+    if ! command -v git &> /dev/null; then
+        log_info "Git not found, installing..."
+        local git_package="git"
+        case $(detect_os) in
+            "debian") git_package="git" ;;  # git-all might be overkill
+            *) git_package="git" ;;
+        esac
+        install_package "$git_package"
+    else
+        log_success "Git is already installed"
+    fi
+}
 
-FILE=$HOME/.ssh/gitkey
-if [ ! -f "$FILE" ]; then
-    ssh-keygen -t ed25519 -C "git" -f ~/.ssh/gitkey
-fi
+# Setup SSH key
+setup_ssh_key() {
+    local ssh_dir="$HOME/.ssh"
+    local key_file="$ssh_dir/gitkey"
+    
+    log_info "Setting up SSH key..."
+    
+    # Create .ssh directory with proper permissions
+    if [[ ! -d "$ssh_dir" ]]; then
+        mkdir -p "$ssh_dir"
+        chmod 700 "$ssh_dir"
+        log_info "Created .ssh directory"
+    fi
+    
+    # Generate SSH key if it doesn't exist
+    if [[ ! -f "$key_file" ]]; then
+        log_info "Generating new SSH key..."
+        ssh-keygen -t ed25519 -C "git" -f "$key_file" -N "" || error_exit "Failed to generate SSH key"
+        chmod 600 "$key_file"
+        chmod 644 "$key_file.pub"
+        log_success "SSH key generated"
+    else
+        log_success "SSH key already exists"
+    fi
+    
+    # Start ssh-agent and add key
+    if [[ -z "${SSH_AGENT_PID:-}" ]]; then
+        eval "$(ssh-agent -s)" || error_exit "Failed to start ssh-agent"
+    fi
+    
+    ssh-add "$key_file" 2>/dev/null || log_warn "Key might already be added to ssh-agent"
+    
+    # Display public key
+    echo
+    log_info "Please add the following public key to GitHub:"
+    echo "----------------------------------------"
+    cat "$key_file.pub" || error_exit "Failed to read public key"
+    echo "----------------------------------------"
+    echo
+    
+    # Wait for user confirmation
+    read -r -p "Press Enter after adding the key to GitHub..." || error_exit "User cancelled"
+}
 
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/gitkey
+# Install zsh and oh-my-zsh
+setup_zsh() {
+    log_info "Setting up Zsh and Oh My Zsh..."
+    
+    # Install zsh
+    if ! command -v zsh &> /dev/null; then
+        install_package "zsh"
+    else
+        log_success "Zsh is already installed"
+    fi
+    
+    # Install oh-my-zsh if not present
+    if ! dir_exists "$HOME/.oh-my-zsh"; then
+        log_info "Installing Oh My Zsh..."
+        RUNZSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" || error_exit "Failed to install Oh My Zsh"
+        log_success "Oh My Zsh installed"
+    else
+        log_success "Oh My Zsh is already installed"
+    fi
+}
 
-echo "Please add the following public key to github:"
-cat ~/.ssh/gitkey.pub
-read -n 1 -p "any key to continue" tmp
+# Install yadm
+install_yadm() {
+    local os_type
+    os_type=$(detect_os)
+    
+    log_info "Installing yadm..."
+    
+    if command -v yadm &> /dev/null; then
+        log_success "yadm is already installed"
+        return
+    fi
+    
+    case "$os_type" in
+        "fedora")
+            # Use more current Fedora version or try to detect actual version
+            local fedora_version
+            fedora_version=$(rpm -E %fedora 2>/dev/null || echo "39")
+            sudo dnf config-manager --add-repo "https://download.opensuse.org/repositories/home:TheLocehiliosan:yadm/Fedora_${fedora_version}/home:TheLocehiliosan:yadm.repo" 2>/dev/null || \
+            sudo dnf config-manager --add-repo "https://download.opensuse.org/repositories/home:TheLocehiliosan:yadm/Fedora_39/home:TheLocehiliosan:yadm.repo" || \
+            error_exit "Failed to add yadm repository"
+            install_package "yadm"
+            ;;
+        "rhel")
+            log_warn "yadm may not be available in default RHEL repos. Trying EPEL..."
+            sudo yum install -y epel-release || log_warn "EPEL installation failed"
+            install_package "yadm" || {
+                log_warn "yadm installation failed. You may need to install it manually."
+                return 1
+            }
+            ;;
+        "debian")
+            install_package "yadm"
+            ;;
+        "arch")
+            install_package "yadm"
+            ;;
+        "macos")
+            install_package "yadm"
+            ;;
+        *)
+            error_exit "yadm installation not supported on $os_type"
+            ;;
+    esac
+}
 
-# zsh
-install_package -y zsh
-if ! dir_exists $HOME/.oh-my-zsh; then
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-fi
+# Clone dotfiles with yadm
+clone_dotfiles() {
+    log_info "Cloning dotfiles repository..."
+    
+    # Test SSH connectivity to GitHub
+    if ! ssh -T git@github.com -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new 2>&1 | grep -q "successfully authenticated"; then
+        log_warn "SSH connection to GitHub failed. Make sure your SSH key is added to GitHub."
+        read -r -p "Continue anyway? (y/N): " response
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            error_exit "User cancelled due to SSH connectivity issues"
+        fi
+    fi
+    
+    # Clone with yadm
+    if yadm status &>/dev/null; then
+        log_warn "yadm repository already exists"
+        read -r -p "Overwrite existing yadm repository? (y/N): " response
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+            yadm clone "git@github.com:aperullo/dotfiles.git" -f || error_exit "Failed to clone dotfiles repository"
+        else
+            log_info "Skipping dotfiles clone"
+            return
+        fi
+    else
+        yadm clone "git@github.com:aperullo/dotfiles.git" || error_exit "Failed to clone dotfiles repository"
+    fi
+    
+    log_success "Dotfiles cloned successfully"
+}
 
-# yadm
+# Main installation process
+main() {
+    log_info "Starting dotfiles installation..."
+    echo
+    
+    # Check if running as root
+    if [[ $EUID -eq 0 ]]; then
+        error_exit "Please do not run this script as root"
+    fi
+    
+    # Check for sudo access
+    if ! sudo -n true 2>/dev/null; then
+        log_info "This script requires sudo access for package installation"
+        sudo -v || error_exit "Sudo access required"
+    fi
+    
+    # Run installation steps
+    ensure_git
+    setup_ssh_key
+    setup_zsh
+    install_yadm
+    clone_dotfiles
+    
+    echo
+    log_success "Dotfiles installation completed!"
+    log_info "You may want to restart your shell or run: exec \$SHELL"
+}
 
-# Detect Linux OS
-if [ -f "/etc/redhat-release" ]; then
-    # CentOS, Red Hat or Fedora
-    sudo dnf config-manager --add-repo https://download.opensuse.org/repositories/home:TheLocehiliosan:yadm/Fedora_35/home:TheLocehiliosan:yadm.repo
-    sudo dnf install -y yadm
-elif [ -f "/etc/debian_version" ]; then
-    # Debian or Ubuntu
-    sudo apt-get install -y yadm
-elif [ -f "/etc/arch-release" ]; then
-    # Arch Linux
-    sudo pacman -S --noconfirm yadm
-else
-    # Unsupported OS
-    echo "Unsupported Linux OS"
-    exit 1
-fi
+# Trap errors
+trap 'error_exit "Script failed at line $LINENO"' ERR
 
-yadm clone "git@github.com:aperullo/dotfiles.git" -f
+# Run main function
+main "$@"
