@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# import functions from funcs file
+source "$(dirname "$(realpath "$0")")/../funcs"
+
 # zsh
 if ! is_installed "zsh"; then
     echo "installing zsh"

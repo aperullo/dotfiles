@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ -n "${_YADM_FUNCS_INCLUDED}" ]; then
+    return
+fi
+export _YADM_FUNCS_INCLUDED=1
+
 dir_exists () {
   return $(test -d "$1")
 }

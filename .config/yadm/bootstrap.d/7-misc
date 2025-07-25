@@ -1,5 +1,7 @@
 #!/bin/bash
-set -e -o pipefail
+
+# import functions from funcs file
+source "$(dirname "$(realpath "$0")")/../funcs"
 
 if ! is_installed "ag"; then
     if [ -f "/etc/redhat-release" ]; then

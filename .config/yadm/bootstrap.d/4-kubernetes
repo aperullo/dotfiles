@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# import functions from funcs file
+source "$(dirname "$(realpath "$0")")/../funcs"
+
 if ! is_installed "kubectl"; then
     brew install kubectl
 fi
