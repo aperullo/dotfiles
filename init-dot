@@ -232,7 +232,8 @@ clone_dotfiles() {
     log_info "Cloning dotfiles repository..."
     
     # Test SSH connectivity to GitHub
-    if ! ssh -T git@github.com -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new 2>&1 | grep -q "successfully authenticated"; then
+    ssh_output=$(ssh -T git@github.com -o StrictHostKEyChecking=accept-new 2>&1 || true)
+    if ! [[ "$ssh_output" =~ "successfully authenticated" ]]; then
         log_warn "SSH connection to GitHub failed. Make sure your SSH key is added to GitHub."
         read -r -p "Continue anyway? (y/N): " response
         if [[ ! "$response" =~ ^[Yy]$ ]]; then

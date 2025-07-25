@@ -3,6 +3,7 @@
 # Save this file as ~/.config/yadm/bootstrap and make it executable. It will
 # execute all executable files (excluding templates and editor backups) in the
 # ~/.config/yadm/bootstrap.d directory when run.
+# Optionally, pass a filename as the first argument to run only that file.
 
 set -eu -o pipefail
 
@@ -18,12 +19,29 @@ if [[ ! -d "$BOOTSTRAP_D" ]]; then
     exit 1
 fi
 
-find -L "$BOOTSTRAP_D" -type f | sort | while IFS= read -r bootstrap; do
-    if [[ -x "$bootstrap" && ! "$bootstrap" =~ "##" && ! "$bootstrap" =~ "~$" ]]; then
-        echo "Running $bootstrap"
-        if ! "$bootstrap"; then
-            echo "Error: bootstrap '$bootstrap' failed" >&2
-            exit 1
-        fi
+if [[ $# -gt 0 ]]; then
+    BOOTSTRAP_FILE="$BOOTSTRAP_D/$1"
+    if [[ ! -f "$BOOTSTRAP_FILE" ]]; then
+        echo "Error: bootstrap file '$BOOTSTRAP_FILE' not found" >&2
+        exit 1
     fi
-done
+    if [[ ! -x "$BOOTSTRAP_FILE" ]]; then
+        echo "Error: bootstrap file '$BOOTSTRAP_FILE' is not executable" >&2
+        exit 1
+    fi
+    echo "Running $BOOTSTRAP_FILE"
+    if ! "$BOOTSTRAP_FILE"; then
+        echo "Error: bootstrap '$BOOTSTRAP_FILE' failed" >&2
+        exit 1
+    fi
+else
+    find -L "$BOOTSTRAP_D" -type f | sort | while IFS= read -r bootstrap; do
+        if [[ -x "$bootstrap" && ! "$bootstrap" =~ "##" && ! "$bootstrap" =~ "~$" ]]; then
+            echo "Running $bootstrap"
+            if ! "$bootstrap"; then
+                echo "Error: bootstrap '$bootstrap' failed" >&2
+                exit 1
+            fi
+        fi
+    done
+fi

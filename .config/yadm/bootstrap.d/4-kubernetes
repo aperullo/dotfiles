@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 if ! is_installed "kubectl"; then
     brew install kubectl
