@@ -3,9 +3,33 @@
 # import functions from funcs file
 source "$(dirname "$(realpath "$0")")/../funcs"
 
-if ! is_installed "brew"; then
-    echo "installing brew"
-    bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-fi
+install_brew() {
+    if ! is_installed "brew"; then
+        echo "installing brew"
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || return 1
+        # Check if brew is now installed
+        if ! is_installed "brew"; then
+            echo "brew installation failed"
+            return 2
+        fi
+    fi
+    return 0
+}
 
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+setup_brew_env() {
+    local BREW_PATH="/home/linuxbrew/.linuxbrew/bin/brew"
+    if [ -x "$BREW_PATH" ]; then
+        eval "$($BREW_PATH shellenv)" || return 1
+    else
+        echo "brew executable not found at $BREW_PATH"
+        return 2
+    fi
+    return 0
+}
+
+main() {
+    install_brew || exit $?
+    setup_brew_env || exit $?
+}
+
+main

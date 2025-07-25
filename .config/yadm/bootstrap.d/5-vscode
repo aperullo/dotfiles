@@ -3,30 +3,53 @@
 # import functions from funcs file
 source "$(dirname "$(realpath "$0")")/../funcs"
 
-if !grep -qEi "(Microsoft|WSL)" /proc/version &> /dev/null ; then
-    if ! is_installed "code"; then
-        echo "installing vscode"
-        if [ -f "/etc/redhat-release" ]; then
-            sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-            sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
+install_vscode_redhat() {
+    sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc || return 1
+    sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo' || return 2
+    sudo dnf install -y code || return 3
+    return 0
+}
 
-            sudo dnf install -y code
-        elif [ -f "/etc/debian_version" ]; then
-            sudo apt-get install -y wget gpg
-            wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
-            sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
-            sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
-            rm -f packages.microsoft.gpg
+install_vscode_debian() {
+    sudo apt-get install -y wget gpg || return 1
+    wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg || return 2
+    sudo install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg || return 3
+    sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list' || return 4
+    rm -f packages.microsoft.gpg
+    sudo apt install -y apt-transport-https || return 5
+    sudo apt update || return 6
+    sudo apt install -y code || return 7
+    return 0
+}
 
-            sudo apt install -y apt-transport-https
-            sudo apt update
-            sudo apt install -y code
-        fi
+install_vscode() {
+    if grep -qEi "(Microsoft|WSL)" /proc/version &> /dev/null ; then
+        return 0
     fi
-fi
+    if is_installed "code"; then
+        return 0
+    fi
+    echo "installing vscode"
+    if [ -f "/etc/redhat-release" ]; then
+        install_vscode_redhat || return $?
+    elif [ -f "/etc/debian_version" ]; then
+        install_vscode_debian || return $?
+    fi
+    return 0
+}
 
-code --install-extension njpwerner.autodocstring
-code --install-extension GitHub.copilot
-code --install-extension ms-python.python
-code --install-extension ms-python.vscode-pylance
-code --install-extension VisualStudioExptTeam.vscodeintellicode
+install_vscode_extensions() {
+    code --install-extension njpwerner.autodocstring || return 1
+    code --install-extension GitHub.copilot || return 2
+    code --install-extension ms-python.python || return 3
+    code --install-extension ms-python.vscode-pylance || return 4
+    code --install-extension VisualStudioExptTeam.vscodeintellicode || return 5
+    return 0
+}
+
+main() {
+    install_vscode || exit $?
+    install_vscode_extensions || exit $?
+}
+
+main

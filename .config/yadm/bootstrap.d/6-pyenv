@@ -6,29 +6,44 @@ source "$(dirname "$(realpath "$0")")/../funcs"
 
 # Install pyenv and Python 3.13 on Ubuntu
 
-if [ -f "/etc/debian_version" ]; then
-    # Install dependencies for building Python
-    sudo apt-get update
+install_pyenv_deps() {
+    sudo apt-get update || return 1
     sudo apt-get install -y \
         make build-essential libssl-dev zlib1g-dev \
         libbz2-dev libreadline-dev libsqlite3-dev wget curl \
         llvm libncurses5-dev liblzma-dev git \
-        tk-dev libffi-dev
+        tk-dev libffi-dev || return 2
+    return 0
+}
 
-    # Install pyenv if not installed
-    if ! command -v pyenv >/dev/null 2>&1; then
-        curl https://pyenv.run | bash
+install_pyenv() {
+    if command -v pyenv >/dev/null 2>&1; then
         export PATH="$HOME/.pyenv/bin:$PATH"
         eval "$(pyenv init --path)"
         eval "$(pyenv init -)"
-    else
-        export PATH="$HOME/.pyenv/bin:$PATH"
-        eval "$(pyenv init --path)"
-        eval "$(pyenv init -)"
+        return 0
     fi
+    curl https://pyenv.run | bash || return 1
+    export PATH="$HOME/.pyenv/bin:$PATH"
+    eval "$(pyenv init --path)"
+    eval "$(pyenv init -)"
+    return 0
+}
 
-    # Install Python 3.13 (latest release)
-    if ! pyenv versions | grep -q "3.13"; then
-        pyenv install -v 3.13.0
+install_python_313() {
+    if pyenv versions | grep -q "3.13"; then
+        return 0
     fi
-fi
+    pyenv install -v 3.13.0 || return 1
+    return 0
+}
+
+main() {
+    if [ -f "/etc/debian_version" ]; then
+        install_pyenv_deps || exit $?
+        install_pyenv || exit $?
+        install_python_313 || exit $?
+    fi
+}
+
+main

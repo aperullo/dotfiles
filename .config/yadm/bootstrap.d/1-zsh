@@ -3,20 +3,36 @@
 # import functions from funcs file
 source "$(dirname "$(realpath "$0")")/../funcs"
 
-# zsh
-if ! is_installed "zsh"; then
-    echo "installing zsh"
-    install_package zsh
-    chsh -s $(which zsh)
-fi
+install_zsh() {
+    if ! is_installed "zsh"; then
+        echo "installing zsh"
+        install_package zsh || return 1
+        chsh -s "$(which zsh)" || return 2
+    fi
+    return 0
+}
 
-if ! dir_exists $HOME/.oh-my-zsh; then
-    echo "installing oh my zsh"
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-fi
+install_oh_my_zsh() {
+    if ! dir_exists "$HOME/.oh-my-zsh"; then
+        echo "installing oh my zsh"
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended || return 1
+    fi
+    return 0
+}
 
-DIR=$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions
-if ! dir_exists "$DIR" ; then
-    echo "installing zsh-autosuggestion"
-    git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-fi
+install_zsh_autosuggestions() {
+    local DIR="$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+    if ! dir_exists "$DIR" ; then
+        echo "installing zsh-autosuggestion"
+        git clone https://github.com/zsh-users/zsh-autosuggestions "${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" || return 1
+    fi
+    return 0
+}
+
+main() {
+    install_zsh || exit $?
+    install_oh_my_zsh || exit $?
+    install_zsh_autosuggestions || exit $?
+}
+
+main

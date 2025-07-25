@@ -3,67 +3,76 @@
 # import functions from funcs file
 source "$(dirname "$(realpath "$0")")/../funcs"
 
-# docker
-if ! is_installed "docker"; then
+install_docker_redhat() {
+    sudo dnf -y install dnf-plugins-core || return 1
+    sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo || return 2
+    sudo dnf install -y docker-ce docker-ce-cli containerd.io || return 3
+    sudo systemctl start docker || return 4
+    sudo usermod -aG docker $USER || return 5
+    newgrp docker
+    sudo chown "$USER":"$USER" /home/"$USER"/.docker -R || return 6
+    sudo chmod g+rwx "$HOME/.docker" -R || return 7
+    sudo systemctl enable docker.service || return 8
+    sudo systemctl enable containerd.service || return 9
+    return 0
+}
+
+install_docker_debian() {
+    sudo apt-get install -y ca-certificates curl gnupg || return 1
+    sudo install -m 0755 -d /etc/apt/keyrings || return 2
+    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc || return 3
+    sudo chmod a+r /etc/apt/keyrings/docker.asc || return 4
+    echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+    $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+    sudo tee /etc/apt/sources.list.d/docker.list > /dev/null || return 5
+    sudo apt-get update || return 6
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || return 7
+    sudo usermod -aG docker $USER || return 8
+    newgrp docker
+    sudo chown "$USER":"$USER" /home/"$USER"/.docker -R || return 9
+    sudo chmod g+rwx "$HOME/.docker" -R || return 10
+    return 0
+}
+
+install_docker_arch() {
+    sudo pacman -S --noconfirm docker || return 1
+    return 0
+}
+
+install_docker() {
+    if is_installed "docker"; then
+        return 0
+    fi
     echo "installing docker"
     if [ -f "/etc/redhat-release" ]; then
-        # CentOS, Red Hat or Fedora
-        sudo dnf -y install dnf-plugins-core
-
-        sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-
-        sudo dnf install -y docker-ce docker-ce-cli containerd.io
-
-        sudo systemctl start docker
-        sudo usermod -aG docker $USER
-        newgrp docker
-        sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
-        sudo chmod g+rwx "$HOME/.docker" -R
-        sudo systemctl enable docker.service
-        sudo systemctl enable containerd.service
-
+        install_docker_redhat || return $?
     elif [ -f "/etc/debian_version" ]; then
-        # Debian or Ubuntu
-        sudo apt-get install -y ca-certificates curl gnupg
-        sudo install -m 0755 -d /etc/apt/keyrings
-        sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-        sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-        # add repository
-        echo \
-        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-        $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
-        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-        # install docker
-        sudo apt-get update
-        sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-        # add user to docker group
-        # sudo systemctl start docker
-        sudo usermod -aG docker $USER
-        newgrp docker
-        sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
-        sudo chmod g+rwx "$HOME/.docker" -R
-
+        install_docker_debian || return $?
     elif [ -f "/etc/arch-release" ]; then
-        # Arch Linux
-        sudo pacman -S --noconfirm $1
+        install_docker_arch || return $?
     else
-        # Unsupported Linux OS
         echo "Unsupported Linux OS"
-        exit 1
+        return 99
     fi
-    
-    
-fi
+    return 0
+}
 
-# docker compose
-if ! is_installed "docker-compose"; then
+install_docker_compose() {
+    if is_installed "docker-compose"; then
+        return 0
+    fi
     echo "installing docker compose"
-    install-package docker-compose-plugin
+    install-package docker-compose-plugin || return 1
+    sudo curl -fL https://github.com/docker/compose-switch/releases/latest/download/docker-compose-linux-amd64 -o /usr/local/bin/compose-switch || return 2
+    sudo chmod +x /usr/local/bin/compose-switch || return 3
+    sudo update-alternatives --install /usr/local/bin/docker-compose docker-compose /usr/local/bin/compose-switch 99 || return 4
+    return 0
+}
 
-    sudo curl -fL https://github.com/docker/compose-switch/releases/latest/download/docker-compose-linux-amd64 -o /usr/local/bin/compose-switch
-    sudo chmod +x /usr/local/bin/compose-switch
-    sudo update-alternatives --install /usr/local/bin/docker-compose docker-compose /usr/local/bin/compose-switch 99
-fi
+main() {
+    install_docker || exit $?
+    install_docker_compose || exit $?
+}
+
+main

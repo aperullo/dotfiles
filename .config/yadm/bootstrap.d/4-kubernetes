@@ -3,10 +3,40 @@
 # import functions from funcs file
 source "$(dirname "$(realpath "$0")")/../funcs"
 
-if ! is_installed "kubectl"; then
-    brew install kubectl
-fi
+ensure_brew() {
+    if ! command -v brew >/dev/null 2>&1; then
+        echo "brew not found, trying to source ~/.zshrc"
+        source ~/.zshrc
+        # re-import funcs after sourcing zshrc
+        source "$(dirname "$(realpath "$0")")/../funcs"
+        if ! command -v brew >/dev/null 2>&1; then
+            echo "brew still not found"
+            return 1
+        fi
+    fi
+    return 0
+}
 
-if ! is_installed "helm"; then
-    brew install helm
-fi
+install_kubectl() {
+    if is_installed "kubectl"; then
+        return 0
+    fi
+    brew install kubectl || return 1
+    return 0
+}
+
+install_helm() {
+    if is_installed "helm"; then
+        return 0
+    fi
+    brew install helm || return 1
+    return 0
+}
+
+main() {
+    ensure_brew || exit $?
+    install_kubectl || exit $?
+    install_helm || exit $?
+}
+
+main
