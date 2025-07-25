@@ -255,6 +255,9 @@ clone_dotfiles() {
         yadm clone "git@github.com:aperullo/dotfiles.git" || error_exit "Failed to clone dotfiles repository"
     fi
     
+    # Apply dotfiles
+    yadm alt
+
     log_success "Dotfiles cloned successfully"
 }
 
