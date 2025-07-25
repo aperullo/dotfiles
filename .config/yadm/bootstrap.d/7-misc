@@ -3,10 +3,23 @@
 # import functions from funcs file
 source "$(dirname "$(realpath "$0")")/../funcs"
 
-if ! is_installed "ag"; then
-    if [ -f "/etc/redhat-release" ]; then
-        install_package the_silver_searcher
-    elif [ -f "/etc/debian_version" ]; then
-        install_package silversearcher-ag
+install_ag() {
+    if is_installed "ag"; then
+        return 0
     fi
-fi
+    if [ -f "/etc/redhat-release" ]; then
+        install_package the_silver_searcher || return 1
+    elif [ -f "/etc/debian_version" ]; then
+        install_package silversearcher-ag || return 2
+    else
+        echo "Unsupported OS for ag install"
+        return 99
+    fi
+    return 0
+}
+
+main() {
+    install_ag || exit $?
+}
+
+main
