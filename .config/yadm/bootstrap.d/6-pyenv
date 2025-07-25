@@ -1,20 +1,31 @@
 #!/bin/bash
 set -e -o pipefail
 
-# python build dependencies
-if ! is_installed "pyenv" || [ "$(pyenv global)" == "system" ]; then
-    
-    if [ -f "/etc/redhat-release" ]; then
-        install_package dnf-plugins-core
-        install_package openssl1.1-1:1.1.1n-1.fc36.x86_64
-    elif [ -f "/etc/debian_version" ]; then
-        sudo apt-get install -y lzma-dev make build-essential libssl-dev zlib1g-dev libreadline-dev libbz2-dev libsqlite3-dev wget curl llvm libncurses5-dev
+# Install pyenv and Python 3.13 on Ubuntu
+
+if [ -f "/etc/debian_version" ]; then
+    # Install dependencies for building Python
+    sudo apt-get update
+    sudo apt-get install -y \
+        make build-essential libssl-dev zlib1g-dev \
+        libbz2-dev libreadline-dev libsqlite3-dev wget curl \
+        llvm libncurses5-dev liblzma-dev git \
+        tk-dev libffi-dev
+
+    # Install pyenv if not installed
+    if ! command -v pyenv >/dev/null 2>&1; then
+        curl https://pyenv.run | bash
+        export PATH="$HOME/.pyenv/bin:$PATH"
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
+    else
+        export PATH="$HOME/.pyenv/bin:$PATH"
+        eval "$(pyenv init --path)"
+        eval "$(pyenv init -)"
     fi
 
-    builddep python3
-
-    brew install pyenv
-    pyenv install -v 3.10.3
-    pyenv global 3.10.3
-    eval "$(pyenv init -)"
+    # Install Python 3.13 (latest release)
+    if ! pyenv versions | grep -q "3.13"; then
+        pyenv install -v 3.13.0
+    fi
 fi
