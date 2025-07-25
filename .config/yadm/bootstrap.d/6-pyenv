@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e -o pipefail
 
+# import functions from funcs file
+source "$(dirname "$(realpath "$0")")/../funcs"
+
 # Install pyenv and Python 3.13 on Ubuntu
 
 if [ -f "/etc/debian_version" ]; then
