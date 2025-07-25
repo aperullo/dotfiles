@@ -1,5 +1,4 @@
 {
-    "workbench.colorTheme": "Mariana Nord",
     "debug.console.fontSize": 16,
     "editor.tokenColorCustomizations": {
         "[Mariana Nord]": {
@@ -20,7 +19,6 @@
     "editor.suggestSelection": "first",
     "editor.inlineSuggest.enabled": true,
     "editor.fontSize": 16,
-    "jupyter.askForKernelRestart": false,
     "github.copilot.enable": {
         "*": true,
         "yaml": false,
@@ -28,41 +26,30 @@
         "markdown": false,
         "python": true
     },
-    "go.formatTool": "goimports",
+    "go.inlayHints.compositeLiteralTypes": true,
     "[go]": {
         "editor.insertSpaces": false,
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
-            "source.organizeImports": true
+            "source.organizeImports": "explicit"
         }
     },
-    "python.pythonPath": "/usr/bin/python",
     "python.linting.enabled": true,
-    "python.linting.pylintPath": "/usr/local/bin/pylint",
+    "python.linting.pylintPath": ".venv/bin/pylint",
     "python.linting.pylintEnabled": true,
     "python.linting.pylintArgs": [
         "--disable",
         "trailing-whitespace,missing-function-docstring,missing-class-docstring,fixme,line-too-long,bad-indentation"
     ],
-    "python.linting.pylintUseMinimalCheckers": false,
-    "python.formatting.autopep8Path": "/usr/local/bin/autopep8",
-    "python.formatting.autopep8Args": [
-        "--max-line-length",
-        "120"
-    ],
-    "python.languageServer": "Pylance",
-    "python.analysis.extraPaths": ["/usr/bin/python3.8"],
+    "python.languageServer": "Default",
     "python.analysis.typeCheckingMode": "basic",
     "workbench.editorAssociations": {
         "*.ipynb": "jupyter-notebook"
     },
     "window.titleBarStyle": "custom",
-    "vsintellicode.java.completionsEnabled": false,
-    "vsintellicode.sql.completionsEnabled": false,
-    "vsintellicode.features.python.deepLearning": "enabled",
-    "jupyter.interactiveWindowMode": "perFile",
     "notebook.cellToolbarLocation": {
         "default": "right",
         "jupyter-notebook": "left"
-    }
+    },
+    "telemetry.telemetryLevel": "off"
 }
