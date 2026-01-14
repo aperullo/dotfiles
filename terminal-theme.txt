@@ -1,0 +1,20 @@
+All terminals have a different way they store color profiles. Here's the most basic I can use to recreate it later.
+
+background: 232A39
+text: FFFFFF
+ANSI color 0: 073642
+ANSI color 1: b43c2a
+ANSI color 2: 00c200
+ANSI color 3: c7c400
+ANSI color 4: 4689cc
+ANSI color 5: c040be
+ANSI color 6: 00c5c7
+ANSI color 7: c7c7c7
+ANSI color 8: 666966
+ANSI color 9: cb4b16
+ANSI color 10: 58e790
+ANSI color 11: ece100
+ANSI color 12: a7a1f2
+ANSI color 13: E17EE1
+ANSI color 14: 60fdff
+ANSI color 15: FFFFFF
